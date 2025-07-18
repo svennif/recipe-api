@@ -1,5 +1,5 @@
 import express from "express";
-import { run } from './db/connect.js';
+import { run } from './utils/db.js';
 import recipeRoutes from './routes/index.js';
 
 

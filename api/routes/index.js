@@ -1,11 +1,12 @@
 import express from 'express';
 import { ObjectId } from 'mongodb';
-import { db } from '../db/connect.js'
+import { getDb } from '../utils/db.js'
 
 const router = express.Router();
 
 router.get('/recipes', async (req, res) => {
   try {
+    const db = getDb();
     const allRecipes = await db.collection('recipes').find({}).toArray();
     res.json(allRecipes);
   } catch (err) {
@@ -39,6 +40,7 @@ router.get('/recipe/:id', async (req, res) => {
 
 router.post('/recipes/add', async (req, res) => {
   try {
+    const db = getDb();
     const newRecipe = await db.collection('recipes').insertOne({
       title: req.body.title,
       difficulty: req.body.difficulty,
@@ -65,6 +67,7 @@ router.post('/recipes/add', async (req, res) => {
 
 router.put('/recipe/:id', async (req, res) => {
   try {
+    const db = getDb();
     const recipeId = req.params.id;
 
     if (!ObjectId.isValid(recipeId)) {
@@ -100,6 +103,7 @@ router.put('/recipe/:id', async (req, res) => {
 
 router.delete('/recipe/:id', async (req, res) => {
   try {
+    const db = getDb();
     const recipeId = req.params.id;
 
     if (!ObjectId.isValid(recipeId)) {
