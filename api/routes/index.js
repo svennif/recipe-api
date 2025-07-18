@@ -17,6 +17,7 @@ router.get('/recipes', async (req, res) => {
 
 router.get('/recipe/:id', async (req, res) => {
   try {
+    const db = getDb();
     const recipeId = req.params.id;
 
     if (!ObjectId.isValid(recipeId)) {
