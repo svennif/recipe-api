@@ -7,6 +7,10 @@ import morgan from 'morgan';
 
 const app = express();
 
+if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 const morganStream = {
   write: (message) => {
     logger.info(message.trim(), { type: 'http_request' });
