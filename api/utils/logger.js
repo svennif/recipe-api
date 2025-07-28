@@ -4,7 +4,11 @@ import path from 'path';
 class AsyncLogger {
   constructor(logFilePath = 'logs/app.log') {
     this.logFilePath = logFilePath;
-    this.ensureLogDirectory();
+    this.isVercel = process.env.VERCEL === '1';
+
+    if (!this.isVercel) {
+      this.ensureLogDirectory();
+    }
   }
 
   async ensureLogDirectory() {
@@ -15,6 +19,7 @@ class AsyncLogger {
       console.error('Failed to create log directory');
     }
   }
+
   async log(level, message, metadata = {}) {
     const timestamp = new Date().toISOString();
     const logEntry = {
@@ -24,16 +29,19 @@ class AsyncLogger {
       ...metadata
     };
 
-    const logLine = JSON.stringify(logEntry) + '\n';
+    const logLine = JSON.stringify(logEntry);
 
-    try {
-      await fs.appendFile(this.logFilePath, logLine);
-
-      if (process.env.NODE_ENV !== 'production') {
+    if (this.isVercel) {
+      // On Vercel, use console logging - Vercel captures these
+      console.log(logLine);
+    } else {
+      // Local development - write to file
+      try {
+        await fs.appendFile(this.logFilePath, logLine + '\n');
         console.log(`[${timestamp}] ${level.toUpperCase()}: ${message}`);
+      } catch (err) {
+        console.error('Failed to write to log file:', err);
       }
-    } catch (err) {
-      console.error('Failed to write to log file:', err);
     }
   }
 
