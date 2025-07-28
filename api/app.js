@@ -1,12 +1,26 @@
 import express from "express";
 import { run } from './utils/db.js';
 import recipeRoutes from './routes/index.js';
-
+import { limiter, strictLimiter } from "./middleware/rateLimit.js";
+import { logger } from './utils/logger.js'
+import morgan from 'morgan';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+const morganStream = {
+  write: (message) => {
+    logger.info(message.trim(), { type: 'http_request' });
+  }
+};
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(morgan('combined', { stream: morganStream }));
+} else {
+  app.use(morgan('dev', { stream: morganStream }));
+}
 
 app.use(express.json());
+app.use(limiter);
 
 let dbInitialized = false;
 
@@ -15,9 +29,8 @@ async function initializeDatabase() {
     try {
       await run();
       dbInitialized = true;
-      console.log('Database initialized');
     } catch (err) {
-      console.error('Failed to initialize database:', err);
+      await logger.error('Failed to initialize database', { error: err.message, stack: err.stack });
       throw err;
     }
   }
@@ -28,16 +41,29 @@ app.use(async (req, res, next) => {
     await initializeDatabase();
     next();
   } catch (err) {
+    await logger.error('Database connection failed', {
+      error: err.message,
+      path: req.path,
+      method: req.method
+    });
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
 
-app.use('/api', recipeRoutes);
+app.use('/api/v1/recipes/add', strictLimiter);
+app.use('/api/v1/recipe/:id', (req, res, next) => {
+  if (req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCh') {
+    return strictLimiter(req, res, next);
+  }
+  next();
+});
+
+app.use('/api/v1/', recipeRoutes);
 
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log("Server is listening on PORT:", PORT);
+  app.listen(PORT, async () => {
+    await logger.info(`Server is listening on PORT: ${PORT}`);
   });
 }
 

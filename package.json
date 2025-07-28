@@ -7,11 +7,14 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "node api/app.js"
 	},
 	"dependencies": {
 		"dotenv": "^17.2.0",
 		"express": "^5.1.0",
-		"mongodb": "^6.17.0"
+		"express-rate-limit": "^8.0.1",
+		"mongodb": "^6.17.0",
+		"morgan": "^1.10.1"
 	}
 }
