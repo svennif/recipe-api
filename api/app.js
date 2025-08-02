@@ -1,9 +1,11 @@
 import express from "express";
 import { run } from './utils/db.js';
 import recipeRoutes from './routes/index.js';
+import authRoutes from './routes/auth.js';
 import { limiter, strictLimiter } from "./middleware/rateLimit.js";
 import { logger } from './utils/logger.js'
 import morgan from 'morgan';
+import { verifyToken } from "./middleware/authMiddleware.js";
 
 const app = express();
 
@@ -54,10 +56,12 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.use('/api/v1/recipes/add', strictLimiter);
+app.use('/api/v1/auth', authRoutes);
+
+app.use('/api/v1/recipes/add', verifyToken, strictLimiter);
 app.use('/api/v1/recipe/:id', (req, res, next) => {
-  if (req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCh') {
-    return strictLimiter(req, res, next);
+  if (req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCH') {
+    return verifyToken(req, res, () => strictLimiter(req, res, next));
   }
   next();
 });

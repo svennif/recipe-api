@@ -85,7 +85,9 @@ router.post('/recipes/add', async (req, res) => {
   try {
     await logger.info('Adding new recipe', {
       title: req.body.title,
-      difficulty: req.body.difficulty
+      difficulty: req.body.difficulty,
+      userId: req.user?.id,
+      userEmail: req.user?.email
     });
 
     const db = getDb();
@@ -98,6 +100,7 @@ router.post('/recipes/add', async (req, res) => {
       description: req.body.description,
       tags: req.body.tags,
       cookingTime: req.body.cookingTime,
+      createdBy: req.user.id,
       createdAt: now,
       updatedAt: now
     });
